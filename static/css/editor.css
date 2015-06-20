@@ -1,0 +1,33 @@
+h1.title {
+  text-align: center;
+  margin-top: 50px;
+  margin-bottom: 50px;
+}
+
+div#outer {
+  width: 600px;
+  margin: auto;
+}
+
+input#query {
+  width: 100%;
+}
+
+div#output {
+  width: 100%;
+}
+
+div.tb_box {
+  border: 1px solid #CCC;
+}
+
+div.tb_title {
+  font-weight: bold;
+}
+
+div.tb_body {
+}
+
+span.tb_tags {
+  color: blue;
+}
