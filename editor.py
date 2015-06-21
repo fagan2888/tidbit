@@ -5,7 +5,7 @@ import json
 import tornado.ioloop
 import tornado.web
 import tornado.websocket
-import tidbits as tb
+import tidbit as tb
 
 if len(sys.argv) <= 1:
   print "database filename required"
