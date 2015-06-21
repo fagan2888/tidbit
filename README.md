@@ -1,4 +1,4 @@
-# Tidbit
+# Tidbits
 Flexible information storage system.
 
 ## Usage
