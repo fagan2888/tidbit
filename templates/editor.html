@@ -1,17 +1,21 @@
 <html>
 
 <head>
-<title>Tidbit Editor</title>
+<title>Tidbit</title>
+<link href="{{ static_url('css/proxima-nova.css') }}" type="text/css" rel="stylesheet"/>
 <link href="{{ static_url('css/editor.css') }}" type="text/css" rel="stylesheet"/>
 </head>
 
 <body>
 
+<h1 class="title">Tidbit</h1>
+
 <div id="outer">
 
-<h1 class="title">Tidbits</h1>
-
-<input id="query" type="text"></textarea>
+<div id="navbar">
+<div id="query" contentEditable="true"></div>
+<div id="new" class="knob">+</div>
+</div>
 
 <div id="output"></div>
 

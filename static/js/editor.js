@@ -1,12 +1,18 @@
 // Why!?!
 Array.prototype.contains = function(obj) {
-    var i = this.length;
-    while (i--) {
-        if (this[i] === obj) {
-            return true;
-        }
+  var i = this.length;
+  while (i--) {
+    if (this[i] === obj) {
+      return true;
     }
-    return false;
+  }
+  return false;
+}
+
+nonprint = [16,17,18,20,27,33,34,35,36,37,38,39,40,45,91,92,93,112,113,114,115,116,117,118,119,120,121,122,123,144,145]
+
+function tagsig(name) {
+  return '<span class="tb_tag"><span class="nametag">'+name+'</span><span class="deltag">x</span></span>';
 }
 
 function connect()
@@ -26,20 +32,42 @@ function connect()
 
     ws.onmessage = function (evt) {
       var msg = evt.data;
-      console.log('Received: ' + msg);
+      // console.log('Received: ' + msg);
 
       var json_data = JSON.parse(msg);
       if (json_data) {
-        var html = '';
-        for (id in json_data) {
-          tb = json_data[id];
-          html += '<div class="tb_box">';
-          html += '<div class="tb_title">' + tb['title'] + '&nbsp;&nbsp;' 
-                + '<span class="tb_tags">' + '[' + tb['tags'] + ']' + '</span>' + '</div>';
-          html += '<div class="tb_body">' + tb['body'] + '</div>';
-          html += '</div>';
+        var cmd = json_data['cmd'];
+        var cont = json_data['content'];
+        if (cmd == 'results') {
+          var html = json_data['content'];
+          $("#output").html(html);
+          connectHandlers();
+        } else if (cmd == 'success') {
+          var box = $(".tb_box[tid="+cont['oldid']+"]")
+          box.attr("tid",cont['newid']);
+          box.attr("modified","false");
+        } else if (cmd == 'set') {
+          var box = $(".tb_box[tid="+cont['id']+"]");
+          box.find(".tb_title").html(cont['title']);
+          box.find(".tb_tag").remove();
+          $(cont['tags']).each(function() {
+            box.find(".tb_tags").append(tagsig($(this)[0]));
+          });
+          box.find(".tb_body").html(cont['body']);
+          box.attr("modified","false");
+        } else if (cmd == 'new') {
+          var html = json_data['content'];
+          $("#output").html(html);
+          connectHandlers();
+          var title = $("#output").find(".tb_title");
+          selection = window.getSelection();        
+          range = document.createRange();
+          range.selectNodeContents(title[0]);
+          selection.removeAllRanges();
+          selection.addRange(range);
+        } else if (cmd == 'remove') {
+          $("#output").children(".tb_box[tid="+cont['id']+"]").remove();
         }
-        $("#output").html(html);
       }
     };
 
@@ -58,13 +86,80 @@ function disconnect()
   }
 }
 
+function connectHandlers() {
+  $(".tb_box").each(function() {
+    var box = $(this);
+
+    box.keyup(function(event) {
+      if (!(nonprint.contains(event.keyCode))) {
+        box.attr("modified","true");
+      }
+    });
+
+    box.find(".deltag").click(function(event) {
+      var tag = $(this).parent();
+      tag.remove();
+      box.attr("modified","true");
+    });
+
+    box.find(".newtag").click(function(event) {
+      var tag = $(tagsig(""));
+      box.find(".tb_tags").append(tag);
+      box.attr("modified","true");
+      var nametag = tag.children(".nametag");
+      var deltag = tag.children(".deltag");
+      nametag.attr("contentEditable","true");
+      selection = window.getSelection();        
+      range = document.createRange();
+      range.selectNodeContents(nametag[0]);
+      selection.removeAllRanges();
+      selection.addRange(range);
+      nametag.keydown(function(event) {
+        console.log(event.keyCode);
+        if (event.keyCode == 13) {
+          console.log('got in');
+          nametag.attr("contentEditable","false");
+          event.preventDefault();
+        }
+      });
+      deltag.click(function(event) {
+        tag.remove();
+        box.attr("modified","true");
+      });
+    });
+
+    box.find(".revert").click(function(event) {
+      var tid = box.attr("tid");
+      var msg = JSON.stringify({"cmd": "get", "content": tid});
+      ws.send(msg)
+    });
+
+    box.find(".save").click(function(event) {
+      var tid = box.attr("tid");
+      var title = box.find(".tb_title").text();
+      var tags = box.find(".nametag").map(function() { return $(this).text() } ).toArray();
+      var body = box.find(".tb_body").text();
+      var msg = JSON.stringify({"cmd": "set", "content": {"tid":tid, "title":title, "tags": tags, "body": body}});
+      ws.send(msg);
+      box.attr("modified","false");
+    });
+
+    box.find(".delete").click(function(event) {
+      var tid = box.attr("tid");
+      var msg = JSON.stringify({"cmd": "delete", "content": tid});
+      ws.send(msg);
+    });
+  });
+}
+
 $(document).ready(function () {
   connect();
 
-  function send() {
-    var text = $("#query").val();
+  function send_query() {
+    var text = $("#query").text();
     try {
-      ws.send(text);
+      var msg = JSON.stringify({"cmd": "query", "content": text});
+      ws.send(msg);
       console.log('Sent: ' + text);
     } catch (exception) {
       console.log('Error:' + exception);
@@ -73,8 +168,13 @@ $(document).ready(function () {
 
   $("#query").keypress(function(event) {
     if (event.keyCode == '13') {
-      send();
+      send_query();
+      event.preventDefault();
     }
   });
 
+  $("#new").click(function() {
+    var msg = JSON.stringify({"cmd": "new", "content": ""});
+    ws.send(msg);
+  });
 });

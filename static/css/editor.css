@@ -1,3 +1,19 @@
+html {
+  font-family: proxima-nova;
+}
+
+html::-webkit-scrollbar {
+  display: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+*:focus {
+  outline: 0;
+}
+
 h1.title {
   text-align: center;
   margin-top: 50px;
@@ -9,25 +25,143 @@ div#outer {
   margin: auto;
 }
 
-input#query {
-  width: 100%;
+div#navbar {
+  position: relative;
+}
+
+div#query {
+  width: 600px;
+  height: 26px;
+  padding: 2px;
+  border: 1px solid #AAF;
+}
+
+div#new {
+  cursor: default;
+  font-size: 13px;
+  position: absolute;
+  right: 5px;
+  top: 5px;
+  width: 16px;
+  height: 16px;
+  text-align: center;
+  color: white;
+  border-radius: 5px;
+  background-color: rgb(53, 122, 232);
 }
 
 div#output {
   width: 100%;
+  max-height: 550px;
+  border-bottom: 1px solid #CCC;
+  margin-bottom: 100px;
+  overflow-y: scroll;
+}
+
+div#output::-webkit-scrollbar {
+    display: none; 
+}
+
+div#output > div.tb_box:last-child {
+  border-bottom: 0;
 }
 
 div.tb_box {
-  border: 1px solid #CCC;
+  position: relative;
+  border-left: 1px solid #CCC;
+  border-right: 1px solid #CCC;
+  border-bottom: 1px solid #CCC;
+  width: 100%;
+  padding: 5px;
 }
 
-div.tb_title {
+div.tb_header {
+  margin-bottom: 5px;
+}
+
+span.tb_title {
   font-weight: bold;
+  margin-right: 3px;
+  min-height: 20px;
 }
 
 div.tb_body {
+  min-height: 20px;
 }
 
-span.tb_tags {
-  color: blue;
+span.tb_tag {
+  cursor: default;
+  margin-right: 5px;
+  font-size: 13px;
+  color: white;
+}
+
+span.nametag {
+  border-top-left-radius: 5px;
+  border-bottom-left-radius: 5px;
+  background-color: rgb(53, 122, 232);
+  padding: 0px 5px 0px 6px;
+}
+
+span.deltag {
+  border-top-right-radius: 5px;
+  border-bottom-right-radius: 5px;
+  background-color: rgba(232, 50, 90, 0.8);
+  padding: 0px 5px 0px 4px;
+}
+
+span.newtag {
+  cursor: default;
+  font-size: 13px;
+  color: white;
+  border-radius: 5px;
+  padding: 0px 4px 0px 4px;
+  background-color: rgb(53, 122, 232);
+}
+
+div.control {
+  display: none;
+  position: absolute;
+  top: 5px;
+  float: right;
+  cursor: default;
+  font-size: 13px;
+  background-color: rgb(53, 122, 232);
+  color: white;
+  border-radius: 2px;
+  padding: 0px 3px 0px 3px;
+}
+
+div.revert {
+  right: 64px;
+}
+
+div.save {
+  right: 24px;
+}
+
+div.delete {
+  font-size: 12px;
+  right: 4px;
+  width: 16px;
+  height: 16px;
+  padding-left: 5px;
+  border-radius: 5px;
+  background-color: rgba(232, 50, 90, 0.8);
+}
+
+div.tb_box[modified='true'] {
+  border-left: 1px solid red;
+}
+
+div.tb_box[modified='true'] > div.revert {
+  display: block;
+}
+
+div.tb_box[modified='true'] > div.save {
+  display: block;
+}
+
+div.tb_box:hover > div.delete {
+  display: block;
 }

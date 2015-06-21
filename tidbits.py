@@ -137,6 +137,9 @@ class Connection(TripleStore):
   def search_tag(self,tag):
     return self.search_field('tag',tag)
 
+  def search(self,term):
+    return list(set(self.search_title(term)+self.search_body(term)+self.search_tag(term)))
+
   def find_tag(self,tag):
     return self.find_field('tag',tag)
 
