@@ -107,9 +107,24 @@ function connectHandlers() {
   $(".tb_box").each(function() {
     var box = $(this);
 
+    function save_box() {
+      var tid = box.attr("tid");
+      var title = box.find(".tb_title").text();
+      var tags = box.find(".nametag").map(function() { return $(this).text() } ).toArray();
+      var body = box.find(".tb_body").text();
+      var msg = JSON.stringify({"cmd": "set", "content": {"tid":tid, "title":title, "tags": tags, "body": body}});
+      console.log(msg);
+      ws.send(msg);
+    }
+
     box.keyup(function(event) {
       if (!(nonprint.contains(event.keyCode))) {
         box.attr("modified","true");
+      }
+      if ((event.keyCode == '13') && event.shiftKey) {
+        console.log('keyboard save');
+        save_box();
+        event.preventDefault();
       }
     });
 
@@ -146,14 +161,7 @@ function connectHandlers() {
     });
 
     box.find(".save").click(function(event) {
-      var tid = box.attr("tid");
-      var title = box.find(".tb_title").text();
-      var tags = box.find(".nametag").map(function() { return $(this).text() } ).toArray();
-      var body = box.find(".tb_body").text();
-      var msg = JSON.stringify({"cmd": "set", "content": {"tid":tid, "title":title, "tags": tags, "body": body}});
-      console.log(msg);
-      ws.send(msg);
-      box.attr("modified","false");
+      save_box();
     });
 
     box.find(".delete").click(function(event) {
