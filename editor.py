@@ -31,7 +31,7 @@ results_str = """
       </span>
       <span class="newtag">+</span>
     </div>
-    <div class="tb_body" contentEditable="true">{{ tb.body }}</div>
+    <div class="tb_body" contentEditable="true">{% raw tb.body %}</div>
     <div class="revert control">Revert</div>
     <div class="save control">Save</div>
     <div class="delete control">x</div>
