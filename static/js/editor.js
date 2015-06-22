@@ -118,15 +118,23 @@ function connectHandlers() {
       ws.send(msg);
     }
 
-    box.keyup(function(event) {
+    box.keydown(function(event) {
       if (!(nonprint.contains(event.keyCode))) {
         box.attr("modified","true");
       }
       if ((event.keyCode == '13') && event.shiftKey) {
-        console.log('keyboard save');
         save_box();
         event.preventDefault();
       }
+    });
+
+    box.find(".tb_title").keydown(function(event) {
+      if (event.keyCode == '13') {
+        if (!event.shiftKey) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+      }     
     });
 
     box.find(".deltag").click(function(event) {
