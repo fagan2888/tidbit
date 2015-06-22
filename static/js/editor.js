@@ -15,6 +15,24 @@ function tagsig(name) {
   return '<span class="tb_tag"><span class="nametag">'+name+'</span><span class="deltag">x</span></span>';
 }
 
+function send_query(text) {
+  try {
+    var msg = JSON.stringify({"cmd": "query", "content": text});
+    ws.send(msg);
+    console.log('Sent: ' + text);
+  } catch (exception) {
+    console.log('Error:' + exception);
+  }
+}
+
+function select_all(elem) {
+  var selection = window.getSelection();        
+  var range = document.createRange();
+  range.selectNodeContents(elem);
+  selection.removeAllRanges();
+  selection.addRange(range);
+}
+
 function connect()
 {
   if ('MozWebSocket' in window) {
@@ -28,6 +46,7 @@ function connect()
 
     ws.onopen = function() {
       console.log('websocket connected!');
+      send_query('');
     };
 
     ws.onmessage = function (evt) {
@@ -59,12 +78,10 @@ function connect()
           var html = json_data['content'];
           $("#output").html(html);
           connectHandlers();
-          var title = $("#output").find(".tb_title");
-          selection = window.getSelection();        
-          range = document.createRange();
-          range.selectNodeContents(title[0]);
-          selection.removeAllRanges();
-          selection.addRange(range);
+          var box = $("#output").find(".tb_box");
+          box.attr("modified","true");
+          var title = box.find(".tb_title");
+          select_all(title[0]);
         } else if (cmd == 'remove') {
           $("#output").children(".tb_box[tid="+cont['id']+"]").remove();
         }
@@ -109,15 +126,9 @@ function connectHandlers() {
       var nametag = tag.children(".nametag");
       var deltag = tag.children(".deltag");
       nametag.attr("contentEditable","true");
-      selection = window.getSelection();        
-      range = document.createRange();
-      range.selectNodeContents(nametag[0]);
-      selection.removeAllRanges();
-      selection.addRange(range);
+      select_all(nametag[0]);
       nametag.keydown(function(event) {
-        console.log(event.keyCode);
         if (event.keyCode == 13) {
-          console.log('got in');
           nametag.attr("contentEditable","false");
           event.preventDefault();
         }
@@ -155,20 +166,10 @@ function connectHandlers() {
 $(document).ready(function () {
   connect();
 
-  function send_query() {
-    var text = $("#query").text();
-    try {
-      var msg = JSON.stringify({"cmd": "query", "content": text});
-      ws.send(msg);
-      console.log('Sent: ' + text);
-    } catch (exception) {
-      console.log('Error:' + exception);
-    }
-  }
-
   $("#query").keypress(function(event) {
     if (event.keyCode == '13') {
-      send_query();
+      var text = $("#query").text();
+      send_query(text);
       event.preventDefault();
     }
   });

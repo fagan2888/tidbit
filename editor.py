@@ -1,18 +1,23 @@
 import os
 import sys
 import json
+import argparse
 
 import tornado.ioloop
 import tornado.web
 import tornado.websocket
 import tidbit as tb
 
-if len(sys.argv) <= 1:
-  print "database filename required"
+# parse input arguments
+parser = argparse.ArgumentParser(description='Tidbit Server.')
+parser.add_argument('db_fname', type=str, help='filename of database')
+parser.add_argument('--port', type=int, default=9000, help='port to serve on')
+args = parser.parse_args()
 
-fname = sys.argv[1]
-con = tb.connect(fname)
+# initialize/open database
+con = tb.connect(args.db_fname)
 
+# code generation
 results_str = """
 {% for tb in results %}
   <div class="tb_box" tid="{{ tb.id }}" selected="false" modified="false">
@@ -59,7 +64,10 @@ class TidbitHandler(tornado.websocket.WebSocketHandler):
             print "error code not found"
 
     def on_message(self, msg):
-        print 'received message: {0}'.format(msg)
+        try:
+          print u'received message: {0}'.format(msg)
+        except Exception as e:
+          print e
         data = json.loads(msg)
         (cmd,cont) = (data['cmd'],data['content'])
         if cmd == 'query':
@@ -128,7 +136,7 @@ class Application(tornado.web.Application):
         )
         tornado.web.Application.__init__(self, handlers, debug=True, **settings)
 
-if __name__ == "__main__":
-    application = Application()
-    application.listen(9000)
-    tornado.ioloop.IOLoop.current().start()
+# create server
+application = Application()
+application.listen(args.port)
+tornado.ioloop.IOLoop.current().start()
