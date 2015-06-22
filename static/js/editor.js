@@ -72,6 +72,7 @@ function connect()
           $(cont['tags']).each(function() {
             box.find(".tb_tags").append(tagsig($(this)[0]));
           });
+          console.log(cont['body']);
           box.find(".tb_body").html(cont['body']);
           box.attr("modified","false");
         } else if (cmd == 'new') {
@@ -149,7 +150,7 @@ function connectHandlers() {
       var tid = box.attr("tid");
       var title = box.find(".tb_title").text();
       var tags = box.find(".nametag").map(function() { return $(this).text() } ).toArray();
-      var body = box.find(".tb_body").text();
+      var body = box.find(".tb_body").html();
       var msg = JSON.stringify({"cmd": "set", "content": {"tid":tid, "title":title, "tags": tags, "body": body}});
       console.log(msg);
       ws.send(msg);
