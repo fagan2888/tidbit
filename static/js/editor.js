@@ -19,7 +19,7 @@ function send_query(text) {
   try {
     var msg = JSON.stringify({"cmd": "query", "content": text});
     ws.send(msg);
-    console.log('Sent: ' + text);
+    console.log('Sent: ' + msg);
   } catch (exception) {
     console.log('Error:' + exception);
   }
@@ -151,6 +151,7 @@ function connectHandlers() {
       var tags = box.find(".nametag").map(function() { return $(this).text() } ).toArray();
       var body = box.find(".tb_body").text();
       var msg = JSON.stringify({"cmd": "set", "content": {"tid":tid, "title":title, "tags": tags, "body": body}});
+      console.log(msg);
       ws.send(msg);
       box.attr("modified","false");
     });

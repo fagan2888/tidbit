@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import argparse
+import traceback
 
 import tornado.ioloop
 import tornado.web
@@ -97,6 +98,7 @@ class TidbitHandler(tornado.websocket.WebSocketHandler):
             self.write_message(json.dumps({'cmd': 'success', 'content': {'oldid': oldid, 'newid': tid.id}}))
           except Exception as e:
             print e
+            print traceback.format_exc()
         elif cmd == 'get':
           try:
             tid = con.get_by_id(cont)

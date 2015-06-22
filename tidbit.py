@@ -11,6 +11,14 @@ from operator import itemgetter
 def extract(arr,idx=0):
   return map(itemgetter(idx),arr)
 
+def ensure_unicode(x):
+  if type(x) is unicode:
+    return x
+  elif type(x) is str:
+    return x.decode('utf-8')
+  else:
+    raise unicode(x)
+
 # initialize a db in a file
 def initialize(fname):
   try:
@@ -81,9 +89,12 @@ class TripleStore(object):
 
   def set_field(self,id,field,value):
     if type(value) in (list,tuple):
-      group = '\'' + '\',\''.join(map(str,value)) + '\'' if len(value) > 0 else ''
-      self.sql_cur.execute('delete from tidbit where id=? and field=? and value not in (%s)' % group,(id,field))
-      self.sql_cur.executemany('insert or ignore into tidbit values (?,?,?)',product([id],[field],value))
+      if len(value):
+        group = u'\'' + u'\',\''.join(map(ensure_unicode,value)) + u'\''
+        self.sql_cur.execute('delete from tidbit where id=? and field=? and value not in (%s)' % group,(id,field))
+        self.sql_cur.executemany('insert or ignore into tidbit values (?,?,?)',product([id],[field],value))
+      else:
+        self.sql_cur.execute('delete from tidbit where id=? and field=?',(id,field))
     else:
       self.sql_cur.execute('update tidbit set value=? where id=? and field=?',(value,id,field))
       self.sql_cur.execute('insert or ignore into tidbit values (?,?,?)',(id,field,value))
