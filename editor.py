@@ -113,7 +113,8 @@ class TidbitHandler(tornado.websocket.WebSocketHandler):
           try:
             tid = con.get_by_id(cont)
             if tid:
-              self.write_message(json.dumps({'cmd': 'set', 'content': {'id': cont, 'title': tid.title, 'body': tid.body, 'tags': sorted(tid.tags,key=unicode.lower)}}))
+              gen = results_template.generate(results=[tid])
+              self.write_message(json.dumps({'cmd': 'set', 'content': {'id': cont, 'box': gen}}))
           except Exception as e:
             print e
         elif cmd == 'new':

@@ -58,24 +58,21 @@ function connect()
         if (cmd == 'results') {
           var html = json_data['content'];
           $("#output").html(html);
-          connectHandlers();
+          $(".tb_box").each(function() { connectHandlers($(this)); });
         } else if (cmd == 'success') {
           var box = $(".tb_box[tid="+cont['oldid']+"]")
           box.attr("tid",cont['newid']);
           box.attr("modified","false");
         } else if (cmd == 'set') {
-          var box = $(".tb_box[tid="+cont['id']+"]");
-          box.find(".tb_title").html(cont['title']);
-          box.find(".tb_tag").remove();
-          $(cont['tags']).each(function() {
-            box.find(".tb_tags").append(tagsig($(this)[0]));
-          });
-          box.find(".tb_body").html(cont['body']);
-          box.attr("modified","false");
+          var tid = cont['id'];
+          var box = $(".tb_box[tid="+tid+"]");
+          box.replaceWith(cont['box']);
+          box = $(".tb_box[tid="+tid+"]");
+          connectHandlers(box);
         } else if (cmd == 'new') {
           var html = json_data['content'];
           $("#output").html(html);
-          connectHandlers();
+          $(".tb_box").each(function() { connectHandlers($(this)); });
           var box = $("#output").find(".tb_box");
           box.attr("modified","true");
           var title = box.find(".tb_title");
@@ -101,62 +98,57 @@ function disconnect()
   }
 }
 
-function connectHandlers() {
-  $(".tb_box").each(function() {
-    var box = $(this);
+function connectHandlers(box) {
+  box.bind("input", function() {
+    box.attr("modified","true");
+  });
 
-    box.bind("input", function() {
-      box.attr("modified","true");
-    });
-
-    box.keydown(function(event) {
-      if ((event.keyCode == 13) && event.shiftKey) {
-        save_box(box);
-        event.preventDefault();
-      } else if ((event.keyCode == 13) && event.metaKey) {
-        new_tag(box);
-      } else if (event.keyCode == 27) {
-        revert_box(box);
-      }
-    });
-
-    box.find(".tb_title").keydown(function(event) {
-      if (event.keyCode == 13) {
-        if (!event.shiftKey) {
-          event.preventDefault();
-        }
-      }     
-    });
-
-    box.find(".nametag").dblclick(function(event) {
-      var tag = '#'+$(this).text();
-      $("#query").text(tag);
-      send_query(tag);
-    });
-
-    box.find(".deltag").click(function(event) {
-      var tag = $(this).parent();
-      tag.remove();
-      box.attr("modified","true");
-    });
-
-    box.find(".newtag").click(function(event) {
-      new_tag(box);
-    });
-
-    box.find(".revert").click(function(event) {
-      revert_box(box);
-    });
-
-    box.find(".save").click(function(event) {
+  box.keydown(function(event) {
+    if ((event.keyCode == 13) && event.shiftKey) {
       save_box(box);
-    });
+      event.preventDefault();
+    } else if ((event.keyCode == 13) && event.metaKey) {
+      new_tag(box);
+    } else if (event.keyCode == 27) {
+      revert_box(box);
+    }
+  });
 
-    box.find(".delete").click(function(event) {
-      var tid = box.attr("tid");
-      var msg = JSON.stringify({"cmd": "delete", "content": tid});
-      ws.send(msg);
-    });
+  box.find(".tb_title").keydown(function(event) {
+    if (event.keyCode == 13) {
+      if (!event.shiftKey) {
+        event.preventDefault();
+      }
+    }     
+  });
+
+  box.find(".nametag").dblclick(function(event) {
+    var tag = '#'+$(this).text();
+    $("#query").text(tag);
+    send_query(tag);
+  });
+
+  box.find(".deltag").click(function(event) {
+    var tag = $(this).parent();
+    delete_tag(box,tag);
+  });
+
+  box.find(".newtag").click(function(event) {
+    new_tag(box);
+  });
+
+  box.find(".revert").click(function(event) {
+    revert_box(box);
+  });
+
+  box.find(".save").click(function(event) {
+    save_box(box);
+  });
+
+  box.find(".delete").click(function(event) {
+    var tid = box.attr("tid");
+    var msg = JSON.stringify({"cmd": "delete", "content": tid});
+    ws.send(msg);
   });
 }
 
@@ -177,6 +169,12 @@ $(document).ready(function () {
     ws.send(msg);
   }
 
+  delete_tag = function(box,tag) {
+    tag.remove();
+    box.attr("modified","true");
+    box.find(".tb_body").focus();
+  }
+
   new_tag = function(box) {
     var tag = $(tagsig(""));
     box.find(".tb_tags").append(tag);
@@ -188,12 +186,12 @@ $(document).ready(function () {
     nametag.keydown(function(event) {
       if (event.keyCode == 13) {
         nametag.attr("contentEditable","false");
+        box.find(".tb_body").focus();
         event.preventDefault();
       }
     });
     deltag.click(function(event) {
-      tag.remove();
-      box.attr("modified","true");
+      delete_tag(box,tag);
     });
   }
 
