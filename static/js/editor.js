@@ -9,10 +9,8 @@ Array.prototype.contains = function(obj) {
   return false;
 }
 
-nonprint = [16,17,18,20,27,33,34,35,36,37,38,39,40,45,91,92,93,112,113,114,115,116,117,118,119,120,121,122,123,144,145]
-
 function tagsig(name) {
-  return '<span class="tb_tag"><span class="nametag">'+name+'</span><span class="deltag">x</span></span>';
+  return '<span class="tb_tag"><span class="nametag">'+name+'</span><span class="deltag">x</span></span>\n';
 }
 
 function send_query(text) {
@@ -72,7 +70,6 @@ function connect()
           $(cont['tags']).each(function() {
             box.find(".tb_tags").append(tagsig($(this)[0]));
           });
-          console.log(cont['body']);
           box.find(".tb_body").html(cont['body']);
           box.attr("modified","false");
         } else if (cmd == 'new') {
@@ -108,33 +105,33 @@ function connectHandlers() {
   $(".tb_box").each(function() {
     var box = $(this);
 
-    function save_box() {
-      var tid = box.attr("tid");
-      var title = box.find(".tb_title").text();
-      var tags = box.find(".nametag").map(function() { return $(this).text() } ).toArray();
-      var body = box.find(".tb_body").html();
-      var msg = JSON.stringify({"cmd": "set", "content": {"tid":tid, "title":title, "tags": tags, "body": body}});
-      console.log(msg);
-      ws.send(msg);
-    }
+    box.bind("input", function() {
+      box.attr("modified","true");
+    });
 
     box.keydown(function(event) {
-      if (!(nonprint.contains(event.keyCode))) {
-        box.attr("modified","true");
-      }
-      if ((event.keyCode == '13') && event.shiftKey) {
-        save_box();
+      if ((event.keyCode == 13) && event.shiftKey) {
+        save_box(box);
         event.preventDefault();
+      } else if ((event.keyCode == 13) && event.metaKey) {
+        new_tag(box);
+      } else if (event.keyCode == 27) {
+        revert_box(box);
       }
     });
 
     box.find(".tb_title").keydown(function(event) {
-      if (event.keyCode == '13') {
+      if (event.keyCode == 13) {
         if (!event.shiftKey) {
           event.preventDefault();
-          event.stopPropagation();
         }
       }     
+    });
+
+    box.find(".nametag").dblclick(function(event) {
+      var tag = '#'+$(this).text();
+      $("#query").text(tag);
+      send_query(tag);
     });
 
     box.find(".deltag").click(function(event) {
@@ -144,33 +141,15 @@ function connectHandlers() {
     });
 
     box.find(".newtag").click(function(event) {
-      var tag = $(tagsig(""));
-      box.find(".tb_tags").append(tag);
-      box.attr("modified","true");
-      var nametag = tag.children(".nametag");
-      var deltag = tag.children(".deltag");
-      nametag.attr("contentEditable","true");
-      select_all(nametag[0]);
-      nametag.keydown(function(event) {
-        if (event.keyCode == 13) {
-          nametag.attr("contentEditable","false");
-          event.preventDefault();
-        }
-      });
-      deltag.click(function(event) {
-        tag.remove();
-        box.attr("modified","true");
-      });
+      new_tag(box);
     });
 
     box.find(".revert").click(function(event) {
-      var tid = box.attr("tid");
-      var msg = JSON.stringify({"cmd": "get", "content": tid});
-      ws.send(msg)
+      revert_box(box);
     });
 
     box.find(".save").click(function(event) {
-      save_box();
+      save_box(box);
     });
 
     box.find(".delete").click(function(event) {
@@ -182,10 +161,46 @@ function connectHandlers() {
 }
 
 $(document).ready(function () {
+  save_box = function(box) {
+    var tid = box.attr("tid");
+    var title = box.find(".tb_title").text();
+    var tags = box.find(".nametag").map(function() { return $(this).text() } ).toArray();
+    var body = box.find(".tb_body").html();
+    var msg = JSON.stringify({"cmd": "set", "content": {"tid":tid, "title":title, "tags": tags, "body": body}});
+    console.log(msg);
+    ws.send(msg);
+  }
+
+  revert_box = function(box) {
+    var tid = box.attr("tid");
+    var msg = JSON.stringify({"cmd": "get", "content": tid});
+    ws.send(msg);
+  }
+
+  new_tag = function(box) {
+    var tag = $(tagsig(""));
+    box.find(".tb_tags").append(tag);
+    box.attr("modified","true");
+    var nametag = tag.children(".nametag");
+    var deltag = tag.children(".deltag");
+    nametag.attr("contentEditable","true");
+    select_all(nametag[0]);
+    nametag.keydown(function(event) {
+      if (event.keyCode == 13) {
+        nametag.attr("contentEditable","false");
+        event.preventDefault();
+      }
+    });
+    deltag.click(function(event) {
+      tag.remove();
+      box.attr("modified","true");
+    });
+  }
+
   connect();
 
   $("#query").keypress(function(event) {
-    if (event.keyCode == '13') {
+    if (event.keyCode == 13) {
       var text = $("#query").text();
       send_query(text);
       event.preventDefault();
@@ -195,5 +210,13 @@ $(document).ready(function () {
   $("#new").click(function() {
     var msg = JSON.stringify({"cmd": "new", "content": ""});
     ws.send(msg);
+  });
+
+  $(document).unbind('keydown').bind('keydown',function() {
+    if (event.keyCode == 8) {
+      if (!event.target.getAttribute("contentEditable")) {
+        event.preventDefault();
+      }
+    }
   });
 });

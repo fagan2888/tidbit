@@ -3,11 +3,15 @@ import sys
 import json
 import argparse
 import traceback
+import operator as op
 
 import tornado.ioloop
 import tornado.web
 import tornado.websocket
 import tidbit as tb
+
+# utils
+tagsort = lambda x: sorted(x,key=str.lower)
 
 # parse input arguments
 parser = argparse.ArgumentParser(description='Tidbit Server.')
@@ -25,7 +29,7 @@ results_str = """
     <div class="tb_header">
       <span class="tb_title" contentEditable="true">{{ tb.title }}</span>
       <span class="tb_tags">
-      {% for tag in tb.tags %}
+      {% for tag in sorted(tb.tags,key=unicode.lower) %}
       <span class="tb_tag"><span class="nametag">{{ tag }}</span><span class="deltag">x</span></span>
       {% end %}
       </span>
@@ -73,21 +77,27 @@ class TidbitHandler(tornado.websocket.WebSocketHandler):
         (cmd,cont) = (data['cmd'],data['content'])
         if cmd == 'query':
           try:
-            if cont.startswith('#'):
-              ids = con.find_tag(cont[1:].strip())
-            elif cont.startswith('title:'):
-              ids = con.search_title(cont[6:].strip())
-            elif cont.startswith('body:'):
-              ids = con.search_body(cont[5:].strip())
-            elif cont.startswith('tag:'):
-              ids = con.search_tag(cont[4:].strip())
+            if cont == '':
+              id_list = con.search('')
             else:
-              ids = con.search(cont.strip())
-            tds = map(con.get_by_id,ids)
-            gen = results_template.generate(results=tds)
+              id_sets = []
+              for term in cont.split():
+                term = term.strip()
+                if len(term) == 0:
+                  continue
+                if term.startswith('#'):
+                  ids = con.find_tag(term[1:].strip())
+                else:
+                  ids = con.search(term)
+                id_sets.append(set(ids))
+              id_list = list(set.intersection(*id_sets))
+            tds = map(con.get_by_id,id_list)
+            tsort = sorted(tds,key=op.attrgetter('timestamp','id'),reverse=True)
+            gen = results_template.generate(results=tsort)
           except Exception as e:
             print e
-            gen = 'Error'
+            print traceback.format_exc()
+            gen = '<div class="error">Error</div>'
           self.write_message(json.dumps({'cmd': 'results', 'content': gen}))
         elif cmd == 'set':
           try:
@@ -103,7 +113,7 @@ class TidbitHandler(tornado.websocket.WebSocketHandler):
           try:
             tid = con.get_by_id(cont)
             if tid:
-              self.write_message(json.dumps({'cmd': 'set', 'content': {'id': cont, 'title': tid.title, 'body': tid.body, 'tags': list(tid.tags)}}))
+              self.write_message(json.dumps({'cmd': 'set', 'content': {'id': cont, 'title': tid.title, 'body': tid.body, 'tags': sorted(tid.tags,key=unicode.lower)}}))
           except Exception as e:
             print e
         elif cmd == 'new':

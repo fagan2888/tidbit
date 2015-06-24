@@ -1,6 +1,7 @@
 # tidbits interface
 
 import os
+import time
 import sqlite3
 
 from itertools import product
@@ -124,7 +125,8 @@ class Connection(TripleStore):
       title = d.pop('title',[''])[0]
       body = d.pop('body',[''])[0]
       tags = d.pop('tag',[])
-      return Tidbit(id=id,title=title,body=body,tags=tags,fields=d)
+      timestamp = d.pop('timestamp',[0.0])[0]
+      return Tidbit(id=id,title=title,body=body,tags=tags,timestamp=timestamp,fields=d)
 
   def delete(self,tb):
     self.delete_id(tb.id)
@@ -133,9 +135,12 @@ class Connection(TripleStore):
   def save(self,tb):
     if tb.id is None:
       tb.id = self.next_id()
+    tb.timestamp = time.time()
+
     self.set_field(tb.id,'title',tb.title)
     self.set_field(tb.id,'body',tb.body)
     self.set_field(tb.id,'tag',list(tb.tags))
+    self.set_field(tb.id,'timestamp',tb.timestamp) # seconds since Epoch in UTC
     for (f,v) in tb.fields.items():
       self.set_field(tb.id,f,v)
 
@@ -154,12 +159,16 @@ class Connection(TripleStore):
   def find_tag(self,tag):
     return self.find_field('tag',tag)
 
+  def get_tags(self):
+    return extract(self.sql_cur.execute('select distinct value from tidbit where field=\'tag\'').fetchall())
+
 class Tidbit:
-  def __init__(self,id=None,title='',body='',tags=[],fields={}):
+  def __init__(self,id=None,title='',body='',tags=[],timestamp=0.0,fields={}):
     self.id = id
     self.title = title
     self.body = body
     self.tags = set(tags)
+    self.timestamp = timestamp
     self.fields = fields
 
   def __repr__(self):

@@ -20,6 +20,11 @@ h1.title {
   margin-bottom: 50px;
 }
 
+div.error {
+  color: red;
+  padding: 5px;
+}
+
 div#outer {
   width: 600px;
   margin: auto;
@@ -54,7 +59,7 @@ div#output {
   width: 100%;
   max-height: 550px;
   border-bottom: 1px solid #CCC;
-  margin-bottom: 100px;
+  /*margin-bottom: 100px;*/
   overflow-y: scroll;
 }
 
