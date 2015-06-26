@@ -105,12 +105,16 @@ function connectHandlers(box) {
 
   box.keydown(function(event) {
     if ((event.keyCode == 13) && event.shiftKey) {
-      save_box(box);
+      if (box.attr("modified") == "true") {
+        save_box(box);
+      }
       event.preventDefault();
     } else if ((event.keyCode == 13) && event.metaKey) {
       new_tag(box);
     } else if (event.keyCode == 27) {
-      revert_box(box);
+      if (box.attr("modified") == "true") {
+        revert_box(box);
+      }
     }
   });
 
@@ -119,7 +123,7 @@ function connectHandlers(box) {
       if (!event.shiftKey) {
         event.preventDefault();
       }
-    }     
+    }
   });
 
   box.find(".nametag").dblclick(function(event) {
@@ -146,9 +150,7 @@ function connectHandlers(box) {
   });
 
   box.find(".delete").click(function(event) {
-    var tid = box.attr("tid");
-    var msg = JSON.stringify({"cmd": "delete", "content": tid});
-    ws.send(msg);
+    delete_box(box);
   });
 }
 
@@ -169,10 +171,10 @@ $(document).ready(function () {
     ws.send(msg);
   }
 
-  delete_tag = function(box,tag) {
-    tag.remove();
-    box.attr("modified","true");
-    box.find(".tb_body").focus();
+  delete_box = function(box) {
+    var tid = box.attr("tid");
+    var msg = JSON.stringify({"cmd": "delete", "content": tid});
+    ws.send(msg);
   }
 
   new_tag = function(box) {
@@ -193,6 +195,12 @@ $(document).ready(function () {
     deltag.click(function(event) {
       delete_tag(box,tag);
     });
+  }
+
+  delete_tag = function(box,tag) {
+    tag.remove();
+    box.attr("modified","true");
+    box.find(".tb_body").focus();
   }
 
   connect();
