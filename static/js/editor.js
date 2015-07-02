@@ -24,7 +24,7 @@ function send_query(text) {
 }
 
 function select_all(elem) {
-  var selection = window.getSelection();        
+  var selection = window.getSelection();
   var range = document.createRange();
   range.selectNodeContents(elem);
   selection.removeAllRanges();
