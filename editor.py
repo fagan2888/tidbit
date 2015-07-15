@@ -102,7 +102,7 @@ class TidbitHandler(tornado.websocket.WebSocketHandler):
         elif cmd == 'set':
           try:
             oldid = cont['tid']
-            id = None if oldid == "new" else oldid
+            id = None if oldid == 'new' else oldid
             tid = tb.Tidbit(id=id,title=cont['title'],body=cont['body'],tags=cont['tags'])
             con.save(tid)
             self.write_message(json.dumps({'cmd': 'success', 'content': {'oldid': oldid, 'newid': tid.id}}))
@@ -119,10 +119,11 @@ class TidbitHandler(tornado.websocket.WebSocketHandler):
             print e
         elif cmd == 'new':
           try:
+            title = cont if cont != '' else 'Title'
             tid = tb.Tidbit()
-            tid.id = "new"
-            tid.set_title("Title")
-            tid.set_body("")
+            tid.id = 'new'
+            tid.set_title(title)
+            tid.set_body('')
             gen = results_template.generate(results=[tid])
             self.write_message(json.dumps({'cmd': 'new', 'content': gen}))
           except Exception as e:
