@@ -1,5 +1,6 @@
 import os
 import sys
+import re
 import json
 import argparse
 import traceback
@@ -12,6 +13,7 @@ import tidbit as tb
 
 # utils
 tagsort = lambda x: sorted(x,key=str.lower)
+quotes = re.compile(r'\"([^\"]*)\"')
 
 # parse input arguments
 parser = argparse.ArgumentParser(description='Tidbit Server.')
@@ -29,7 +31,7 @@ results_str = """
     <div class="tb_header">
       <span class="tb_title" contentEditable="true">{{ tb.title }}</span>
       <span class="tb_tags">
-      {% for tag in sorted(tb.tags,key=unicode.lower) %}
+      {% for tag in sorted(tb.tags,key=str.lower) %}
       <span class="tb_tag"><span class="nametag">{{ tag }}</span><span class="deltag">x</span></span>
       {% end %}
       </span>
@@ -50,29 +52,29 @@ class EditorHandler(tornado.web.RequestHandler):
 
 class TidbitHandler(tornado.websocket.WebSocketHandler):
     def initialize(self):
-        print "initializing"
+        print("initializing")
 
     def allow_draft76(self):
         return True
 
     def open(self):
-        print "connection received"
+        print("connection received")
 
     def on_close(self):
-        print "connection closing"
+        print("connection closing")
 
     def error_msg(self, error_code):
         if not error_code is None:
             json_string = json.dumps({"type": "error", "code": error_code})
             self.write_message("{0}".format(json_string))
         else:
-            print "error code not found"
+            print("error code not found")
 
     def on_message(self, msg):
         try:
-          print u'received message: {0}'.format(msg)
+          print(u'received message: {0}'.format(msg))
         except Exception as e:
-          print e
+          print(e)
         data = json.loads(msg)
         (cmd,cont) = (data['cmd'],data['content'])
         if cmd == 'query':
@@ -80,23 +82,35 @@ class TidbitHandler(tornado.websocket.WebSocketHandler):
             if cont == '':
               id_list = con.search('')
             else:
+              # generate terms list
+              lastidx = 0
+              remain = ''
+              terms = []
+              for chunk in quotes.finditer(cont):
+                  (i1,i2) = chunk.span()
+                  remain += cont[lastidx:i1]
+                  terms.append(cont[i1+1:i2-1])
+                  lastidx = i2
+              remain += cont[lastidx:]
+              terms += remain.split()
+
+              # fetch related ids
               id_sets = []
-              for term in cont.split():
-                term = term.strip()
-                if len(term) == 0:
-                  continue
+              for term in terms:
                 if term.startswith('#'):
-                  ids = con.find_tag(term[1:].strip())
+                  ids = con.find_tag(term[1:])
                 else:
                   ids = con.search(term)
                 id_sets.append(set(ids))
               id_list = list(set.intersection(*id_sets))
-            tds = map(con.get_by_id,id_list)
+
+            # get text
+            tds = [con.get_by_id(id) for id in id_list]
             tsort = sorted(tds,key=op.attrgetter('timestamp','id'),reverse=True)
-            gen = results_template.generate(results=tsort)
+            gen = results_template.generate(results=tsort).decode()
           except Exception as e:
-            print e
-            print traceback.format_exc()
+            print(e)
+            print(traceback.format_exc())
             gen = '<div class="error">Error</div>'
           self.write_message(json.dumps({'cmd': 'results', 'content': gen}))
         elif cmd == 'set':
@@ -107,16 +121,16 @@ class TidbitHandler(tornado.websocket.WebSocketHandler):
             con.save(tid)
             self.write_message(json.dumps({'cmd': 'success', 'content': {'oldid': oldid, 'newid': tid.id}}))
           except Exception as e:
-            print e
-            print traceback.format_exc()
+            print(e)
+            print(traceback.format_exc())
         elif cmd == 'get':
           try:
             tid = con.get_by_id(cont)
             if tid:
-              gen = results_template.generate(results=[tid])
+              gen = results_template.generate(results=[tid]).decode()
               self.write_message(json.dumps({'cmd': 'set', 'content': {'id': cont, 'box': gen}}))
           except Exception as e:
-            print e
+            print(e)
         elif cmd == 'new':
           try:
             title = cont if cont != '' else 'Title'
@@ -124,16 +138,16 @@ class TidbitHandler(tornado.websocket.WebSocketHandler):
             tid.id = 'new'
             tid.set_title(title)
             tid.set_body('')
-            gen = results_template.generate(results=[tid])
+            gen = results_template.generate(results=[tid]).decode()
             self.write_message(json.dumps({'cmd': 'new', 'content': gen}))
           except Exception as e:
-            print e
+            print(e)
         elif cmd == 'delete':
           try:
             con.delete_id(cont)
             self.write_message(json.dumps({'cmd': 'remove', 'content': {'id': cont}}))
           except Exception as e:
-            print e
+            print(e)
 
 # tornado content handlers
 class Application(tornado.web.Application):

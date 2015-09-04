@@ -6,19 +6,18 @@ import sqlite3
 
 from itertools import product
 from collections import defaultdict
-from operator import itemgetter
 
 # utils
 def extract(arr,idx=0):
-  return map(itemgetter(idx),arr)
+  return [x[idx] for x in arr]
 
 def ensure_unicode(x):
-  if type(x) is unicode:
+  if type(x) is str:
     return x
-  elif type(x) is str:
-    return x.decode('utf-8')
+  elif type(x) is bytes:
+    return x.decode()
   else:
-    raise unicode(x)
+    raise str(x)
 
 # initialize a db in a file
 def initialize(fname):
@@ -27,7 +26,7 @@ def initialize(fname):
   except OSError:
     pass
   else:
-    print 'File exists.'
+    print('File exists.')
     return
 
   con = sqlite3.connect(fname)
@@ -42,12 +41,12 @@ def connect(fname,create=True):
   try:
     ret = os.stat(fname)
   except OSError:
-    print 'File not found.'
+    print('File not found.')
     if create:
-      print 'Creating.'
+      print('Creating.')
       initialize(fname)
     else:
-      print 'Aborting.'
+      print('Aborting.')
       return
 
   return Connection(fname)
@@ -67,7 +66,7 @@ class TripleStore(object):
   def fetch(self,id):
     ret = self.sql_cur.execute('select field,value from tidbit where id=?',(id,)).fetchall()
     if not ret:
-      print 'Id not found.'
+      print('Id not found.')
       return
     else:
       d = defaultdict(list)
@@ -125,7 +124,7 @@ class Connection(TripleStore):
       title = d.pop('title',[''])[0]
       body = d.pop('body',[''])[0]
       tags = d.pop('tag',[])
-      timestamp = d.pop('timestamp',[0.0])[0]
+      timestamp = float(d.pop('timestamp',[0.0])[0])
       return Tidbit(id=id,title=title,body=body,tags=tags,timestamp=timestamp,fields=d)
 
   def delete(self,tb):

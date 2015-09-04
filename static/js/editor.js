@@ -162,6 +162,19 @@ function connectHandlers(box) {
   });
 }
 
+/*
+function strip_tags(html) {
+  if (html.startsWith('<div>')) {
+    html = html.replace(/<div>/,'');
+  }
+  return html.replace(/<div ?.*?>/g,'\n')
+             .replace(/<\/div>/g,'')
+             .replace(/<br>/g,'')
+             .replace(/<span ?.*?>/g,'')
+             .replace(/<\/span>/g,'');
+}
+*/
+
 function save_box(box) {
   var tid = box.attr("tid");
   var title = box.find(".tb_title").text();
@@ -228,7 +241,7 @@ $(document).ready(function () {
   });
 
   $(document).unbind("keydown").bind("keydown",function() {
-    if (event.keyCode == 8) { 
+    if (event.keyCode == 8) {
       if (!event.target.getAttribute("contentEditable") && (event.target.tagName.toLowerCase() != "input")) {
         console.log('rejecting backspace: ',event.target.tagName);
         event.preventDefault();

@@ -1,4 +1,4 @@
-@import url(http://fonts.googleapis.com/css?family=Source+Sans+Pro:400,700);
+@import url('source-sans-pro.css');
 
 html {
   font-family: 'Source Sans Pro', serif;
@@ -185,7 +185,7 @@ html::-webkit-scrollbar {
   }
 
   #output {
-    max-height: 550px;
+    max-height: 500px;
   }
 }
 
