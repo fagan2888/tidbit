@@ -23,12 +23,22 @@ function send_query(text) {
   }
 }
 
-function select_all(elem) {
+function select_all(element) {
   var selection = window.getSelection();
   var range = document.createRange();
-  range.selectNodeContents(elem);
+  range.selectNodeContents(element);
   selection.removeAllRanges();
   selection.addRange(range);
+}
+
+function set_caret_at_end(element) {
+  element.focus();
+  var range = document.createRange();
+  range.selectNodeContents(element);
+  range.collapse(false);
+  var sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
 }
 
 function create_websocket(first_time) {
@@ -70,7 +80,7 @@ function create_websocket(first_time) {
         var box = $("#output").find(".tb_box");
         box.attr("modified","true");
         var title = box.find(".tb_title");
-        select_all(title[0]);
+        set_caret_at_end(title[0]);
       } else if (cmd == 'remove') {
         $("#output").children(".tb_box[tid="+cont['id']+"]").remove();
       }
@@ -204,7 +214,8 @@ function new_tag(box) {
   var nametag = tag.children(".nametag");
   var deltag = tag.children(".deltag");
   nametag.attr("contentEditable","true");
-  select_all(nametag[0]);
+  //select_all(nametag[0]);
+  set_caret_at_end(nametag[0]);
   nametag.keydown(function(event) {
     if (event.keyCode == 13) {
       nametag.attr("contentEditable","false");
