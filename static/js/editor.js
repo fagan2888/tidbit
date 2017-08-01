@@ -9,6 +9,11 @@ Array.prototype.contains = function(obj) {
   return false;
 }
 
+function scrollLeft(el) {
+  var tmp = el[0];
+  return tmp.scrollHeight - tmp.scrollTop - tmp.clientHeight
+}
+
 function tagsig(name) {
   return '<span class="tb_tag"><span class="nametag">'+name+'</span><span class="deltag">x</span></span>\n';
 }
@@ -60,9 +65,25 @@ function create_websocket(first_time) {
       var cmd = json_data['cmd'];
       var cont = json_data['content'];
       if (cmd == 'results') {
-        var html = json_data['content'];
-        $("#output").html(html);
-        $(".tb_box").each(function() { connectHandlers($(this)); });
+        var html = cont['html'];
+        if (cont['reset']) {
+          output.html(html);
+        } else {
+          output.append(html);
+        }
+        $(".tb_box.fresh").each(function() { connectHandlers($(this)); });
+        if (cont['done']) {
+          output.addClass('done');
+        } else {
+          output.removeClass('done');
+        }
+        if (scrollLeft(output) == 0) {
+          arrow.hide();
+        } else {
+          arrow.show();
+        }
+        output.scrollTop(0);
+      } else if (cmd == 'extra') {
       } else if (cmd == 'success') {
         var box = $(".tb_box[tid="+cont['oldid']+"]")
         box.attr("tid",cont['newid']);
@@ -170,6 +191,8 @@ function connectHandlers(box) {
   box.find(".delete").click(function(event) {
     delete_box(box);
   });
+
+  box.removeClass("fresh");
 }
 
 /*
@@ -234,7 +257,13 @@ function delete_tag(box,tag) {
   box.find(".tb_body").focus();
 }
 
+function initialize() {
+  output = $("#output");
+  arrow = $("#arrow");
+}
+
 $(document).ready(function () {
+  initialize();
   connect();
 
   $("#query").keypress(function(event) {
@@ -249,6 +278,21 @@ $(document).ready(function () {
     var title = $("#query").attr("value");
     var msg = JSON.stringify({"cmd": "new", "content": title});
     ws.send(msg);
+  });
+
+  $("#output").scroll(function() {
+    if (this.scrollHeight - this.scrollTop === this.clientHeight) {
+      if (output.hasClass('done')) {
+        arrow.fadeOut(100);
+      } else {
+        var msg = JSON.stringify({"cmd": "moar", "content": ""});
+        ws.send(msg);
+      }
+    } else {
+      if (!arrow.is(':visible')) {
+        arrow.fadeIn(100);
+      }
+    }
   });
 
   $(document).unbind("keydown").bind("keydown",function() {

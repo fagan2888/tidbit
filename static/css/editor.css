@@ -19,8 +19,17 @@ html::-webkit-scrollbar {
 #title {
   font-size: 40px;
   text-align: center;
-  margin-top: 30px;
+  margin-top: 60px;
   margin-bottom: 20px;
+}
+
+#arrow {
+  font-size: 25px;
+  text-align: center;
+}
+
+#arrow.end {
+  visibility: hidden;
 }
 
 #outer {
@@ -75,8 +84,12 @@ html::-webkit-scrollbar {
   padding: 5px;
 }
 
-.tb_box:last-child {
+#output .tb_box:last-child {
   border-bottom: 0;
+}
+
+#output.done .tb_box:last-child {
+  /* border-bottom: 1px solid #AAA; */
 }
 
 .tb_header {
